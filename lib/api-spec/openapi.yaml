@@ -1,22 +1,33 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Kampungku Housing Website API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: settings
+    description: Site settings management
+  - name: gallery
+    description: Gallery management
+  - name: documents
+    description: Document management
+  - name: contact
+    description: Contact messages
+  - name: cctv
+    description: CCTV management
+  - name: auth
+    description: Authentication
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +35,554 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/admin/login:
+    post:
+      operationId: adminLogin
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResponse"
+        "401":
+          description: Unauthorized
+
+  /auth/admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/admin/me:
+    get:
+      operationId: getAdminMe
+      tags: [auth]
+      summary: Get current admin session
+      responses:
+        "200":
+          description: Admin session info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Not authenticated
+
+  /auth/admin/change-password:
+    post:
+      operationId: adminChangePassword
+      tags: [auth]
+      summary: Change admin password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordBody"
+      responses:
+        "200":
+          description: Password changed
+        "401":
+          description: Unauthorized
+
+  /auth/cctv/verify:
+    post:
+      operationId: verifyCctvPassword
+      tags: [auth]
+      summary: Verify CCTV page password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CctvVerifyBody"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CctvVerifyResponse"
+        "401":
+          description: Wrong password
+
+  /settings/homepage:
+    get:
+      operationId: getHomepageSettings
+      tags: [settings]
+      summary: Get homepage settings
+      responses:
+        "200":
+          description: Homepage settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomepageSettings"
+    put:
+      operationId: updateHomepageSettings
+      tags: [settings]
+      summary: Update homepage settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HomepageSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomepageSettings"
+
+  /settings/contact:
+    get:
+      operationId: getContactSettings
+      tags: [settings]
+      summary: Get contact page settings
+      responses:
+        "200":
+          description: Contact settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactSettings"
+    put:
+      operationId: updateContactSettings
+      tags: [settings]
+      summary: Update contact page settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactSettings"
+
+  /settings/email:
+    get:
+      operationId: getEmailSettings
+      tags: [settings]
+      summary: Get email settings
+      responses:
+        "200":
+          description: Email settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailSettings"
+    put:
+      operationId: updateEmailSettings
+      tags: [settings]
+      summary: Update email settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailSettings"
+
+  /settings/email/test:
+    post:
+      operationId: testEmailConnection
+      tags: [settings]
+      summary: Test email connection
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestResult"
+
+  /settings/drive:
+    get:
+      operationId: getDriveSettings
+      tags: [settings]
+      summary: Get Google Drive settings
+      responses:
+        "200":
+          description: Drive settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveSettings"
+    put:
+      operationId: updateDriveSettings
+      tags: [settings]
+      summary: Update Google Drive settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriveSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveSettings"
+
+  /settings/drive/test:
+    post:
+      operationId: testDriveConnection
+      tags: [settings]
+      summary: Test Google Drive connection
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestResult"
+
+  /settings/cctv:
+    get:
+      operationId: getCctvSettings
+      tags: [settings]
+      summary: Get CCTV settings
+      responses:
+        "200":
+          description: CCTV settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CctvSettings"
+    put:
+      operationId: updateCctvSettings
+      tags: [settings]
+      summary: Update CCTV settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CctvSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CctvSettings"
+
+  /settings/documents-page:
+    get:
+      operationId: getDocumentsPageSettings
+      tags: [settings]
+      summary: Get documents page settings
+      responses:
+        "200":
+          description: Documents page settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentsPageSettings"
+    put:
+      operationId: updateDocumentsPageSettings
+      tags: [settings]
+      summary: Update documents page settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentsPageSettingsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentsPageSettings"
+
+  /gallery/images:
+    get:
+      operationId: listGalleryImages
+      tags: [gallery]
+      summary: List gallery images
+      responses:
+        "200":
+          description: List of gallery images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryItem"
+    post:
+      operationId: createGalleryImage
+      tags: [gallery]
+      summary: Add gallery image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGalleryItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryItem"
+
+  /gallery/images/{id}:
+    delete:
+      operationId: deleteGalleryImage
+      tags: [gallery]
+      summary: Delete gallery image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /gallery/videos:
+    get:
+      operationId: listGalleryVideos
+      tags: [gallery]
+      summary: List gallery videos
+      responses:
+        "200":
+          description: List of gallery videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryItem"
+    post:
+      operationId: createGalleryVideo
+      tags: [gallery]
+      summary: Add gallery video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGalleryItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryItem"
+
+  /gallery/videos/{id}:
+    delete:
+      operationId: deleteGalleryVideo
+      tags: [gallery]
+      summary: Delete gallery video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: List all documents
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+    post:
+      operationId: createDocument
+      tags: [documents]
+      summary: Upload document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /documents/{id}:
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      summary: Delete document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /contact/messages:
+    get:
+      operationId: listContactMessages
+      tags: [contact]
+      summary: List contact messages
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContactMessage"
+    post:
+      operationId: sendContactMessage
+      tags: [contact]
+      summary: Send contact message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendContactMessageBody"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactMessage"
+
+  /contact/messages/{id}:
+    delete:
+      operationId: deleteContactMessage
+      tags: [contact]
+      summary: Delete contact message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /cctv/cameras:
+    get:
+      operationId: listCctvCameras
+      tags: [cctv]
+      summary: List CCTV cameras
+      responses:
+        "200":
+          description: List of cameras
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CctvCamera"
+    post:
+      operationId: createCctvCamera
+      tags: [cctv]
+      summary: Add CCTV camera
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCctvCameraBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CctvCamera"
+
+  /cctv/cameras/{id}:
+    put:
+      operationId: updateCctvCamera
+      tags: [cctv]
+      summary: Update CCTV camera
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCctvCameraBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CctvCamera"
+    delete:
+      operationId: deleteCctvCamera
+      tags: [cctv]
+      summary: Delete CCTV camera
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +593,483 @@ components:
       required:
         - status
 
+    AdminLoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    AdminSession:
+      type: object
+      properties:
+        isAuthenticated:
+          type: boolean
+        username:
+          type: string
+      required:
+        - isAuthenticated
+
+    ChangePasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - currentPassword
+        - newPassword
+
+    CctvVerifyBody:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+
+    CctvVerifyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    TestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    HomepageSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        heroTitle:
+          type: string
+        heroSubtitle:
+          type: string
+        heroImageUrl:
+          type: string
+        heroBanners:
+          type: array
+          items:
+            type: string
+        aboutTitle:
+          type: string
+        aboutText:
+          type: string
+        aboutImageUrl:
+          type: string
+        featuresTitle:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feature"
+        statsItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatItem"
+        updatedAt:
+          type: string
+      required:
+        - id
+        - heroTitle
+        - heroSubtitle
+
+    HomepageSettingsBody:
+      type: object
+      properties:
+        heroTitle:
+          type: string
+        heroSubtitle:
+          type: string
+        heroImageUrl:
+          type: string
+        heroBanners:
+          type: array
+          items:
+            type: string
+        aboutTitle:
+          type: string
+        aboutText:
+          type: string
+        aboutImageUrl:
+          type: string
+        featuresTitle:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feature"
+        statsItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatItem"
+
+    Feature:
+      type: object
+      properties:
+        icon:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+      required:
+        - title
+        - description
+
+    StatItem:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+        - value
+        - label
+
+    ContactSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        address:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        mapEmbedUrl:
+          type: string
+        mapLat:
+          type: number
+        mapLng:
+          type: number
+        officeHours:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - address
+
+    ContactSettingsBody:
+      type: object
+      properties:
+        address:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        mapEmbedUrl:
+          type: string
+        mapLat:
+          type: number
+        mapLng:
+          type: number
+        officeHours:
+          type: string
+
+    EmailSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        gmailUser:
+          type: string
+        gmailAppPassword:
+          type: string
+        recipientEmail:
+          type: string
+        senderName:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+
+    EmailSettingsBody:
+      type: object
+      properties:
+        gmailUser:
+          type: string
+        gmailAppPassword:
+          type: string
+        recipientEmail:
+          type: string
+        senderName:
+          type: string
+
+    DriveSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        appsScriptUrl:
+          type: string
+        folderId:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+
+    DriveSettingsBody:
+      type: object
+      properties:
+        appsScriptUrl:
+          type: string
+        folderId:
+          type: string
+
+    CctvSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        pagePassword:
+          type: string
+        pageTitle:
+          type: string
+        pageDescription:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+
+    CctvSettingsBody:
+      type: object
+      properties:
+        pagePassword:
+          type: string
+        pageTitle:
+          type: string
+        pageDescription:
+          type: string
+
+    DocumentsPageSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        pageTitle:
+          type: string
+        pageDescription:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+
+    DocumentsPageSettingsBody:
+      type: object
+      properties:
+        pageTitle:
+          type: string
+        pageDescription:
+          type: string
+
+    GalleryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        thumbnailUrl:
+          type: string
+        type:
+          type: string
+          enum: [image, video]
+        description:
+          type: string
+        driveFileId:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - url
+        - type
+
+    CreateGalleryItemBody:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        thumbnailUrl:
+          type: string
+        description:
+          type: string
+        driveFileId:
+          type: string
+      required:
+        - title
+        - url
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+        fileSize:
+          type: string
+        fileType:
+          type: string
+        driveFileId:
+          type: string
+        category:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - fileUrl
+
+    CreateDocumentBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+        fileSize:
+          type: string
+        fileType:
+          type: string
+        driveFileId:
+          type: string
+        category:
+          type: string
+      required:
+        - title
+        - fileUrl
+
+    ContactMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - message
+
+    SendContactMessageBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+      required:
+        - name
+        - email
+        - message
+
+    CctvCamera:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        location:
+          type: string
+        streamUrl:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - streamUrl
+
+    CreateCctvCameraBody:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        streamUrl:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - name
+        - streamUrl
