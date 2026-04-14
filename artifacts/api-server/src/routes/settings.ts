@@ -40,19 +40,16 @@ router.get("/settings/homepage", async (req, res) => {
 
 router.put("/settings/homepage", requireAuth, async (req, res) => {
   try {
+    const { eq } = await import("drizzle-orm");
     const rows = await db.select().from(homepageSettingsTable).limit(1);
     if (rows.length === 0) {
       await db.insert(homepageSettingsTable).values({});
     }
     const existing = await db.select().from(homepageSettingsTable).limit(1);
     const id = existing[0].id;
-    const body = req.body;
     const [updated] = await db.update(homepageSettingsTable)
-      .set({ ...body, updatedAt: new Date() })
-      .where((t: any) => {
-        const { eq } = require("drizzle-orm");
-        return eq(t.id, id);
-      })
+      .set({ ...req.body, updatedAt: new Date() })
+      .where(eq(homepageSettingsTable.id, id))
       .returning();
     res.json(updated);
   } catch (err) {

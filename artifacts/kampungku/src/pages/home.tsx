@@ -3,7 +3,14 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { convertDriveUrlToEmbed } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2, MapPin, Phone, FileText } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+
+function DynamicIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name];
+  if (!Icon) return null;
+  return <Icon className={className} />;
+}
 
 export default function Home() {
   const { data: settings, isLoading } = useGetHomepageSettings();
@@ -117,11 +124,11 @@ export default function Home() {
               <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {settings.features.map((feature: { icon?: string; title: string; description: string; imageUrl?: string }, idx: number) => (
-                <div key={idx} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                <div key={idx} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden flex flex-col">
                   {feature.imageUrl && (
-                    <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                    <div className="aspect-[16/9] w-full overflow-hidden bg-muted flex-shrink-0">
                       <img
                         src={convertDriveUrlToEmbed(feature.imageUrl, "image")}
                         alt={feature.title}
@@ -129,16 +136,15 @@ export default function Home() {
                       />
                     </div>
                   )}
-                  <div className="p-8">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
-                      {feature.icon ? (
-                        <span className="text-2xl">{feature.icon}</span>
-                      ) : (
-                        <CheckCircle2 className="w-6 h-6" />
-                      )}
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 font-serif">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                  <div className="p-6 flex flex-col flex-1">
+                    {feature.icon && (
+                      <div className="inline-flex items-center gap-1.5 text-primary bg-primary/10 rounded-md px-2.5 py-1 text-sm font-medium mb-4 w-fit">
+                        <DynamicIcon name={feature.icon} className="w-4 h-4" />
+                        <span>{feature.icon}</span>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-bold mb-2 text-foreground">{feature.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed text-sm">{feature.description}</p>
                   </div>
                 </div>
               ))}
