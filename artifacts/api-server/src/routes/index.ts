@@ -6,6 +6,7 @@ import galleryRouter from "./gallery";
 import documentsRouter from "./documents";
 import contactRouter from "./contact";
 import cctvRouter from "./cctv";
+import customPagesRouter from "./custom-pages";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(galleryRouter);
 router.use(documentsRouter);
 router.use(contactRouter);
 router.use(cctvRouter);
+router.use(customPagesRouter);
 
 export default router;

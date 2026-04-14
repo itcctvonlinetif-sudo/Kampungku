@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Public Pages
 import Home from "@/pages/home";
 import Gallery from "@/pages/gallery";
 import Cctv from "@/pages/cctv";
@@ -11,8 +10,8 @@ import Contact from "@/pages/contact";
 import Documents from "@/pages/documents";
 import AdminLogin from "@/pages/admin-login";
 import NotFound from "@/pages/not-found";
+import CustomPageView from "@/pages/custom-page-view";
 
-// Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminBerandaSettings from "@/pages/admin/beranda-settings";
 import AdminGaleriSettings from "@/pages/admin/galeri-settings";
@@ -22,6 +21,7 @@ import AdminEmailSettings from "@/pages/admin/email-settings";
 import AdminDriveSettings from "@/pages/admin/drive-settings";
 import AdminDokumenSettings from "@/pages/admin/dokumen-settings";
 import AdminPassword from "@/pages/admin/password";
+import AdminHalamanSettings from "@/pages/admin/halaman-settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,17 +35,15 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
-      {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/galeri" component={Gallery} />
       <Route path="/cctv" component={Cctv} />
       <Route path="/kontak" component={Contact} />
       <Route path="/dokumen" component={Documents} />
-      
-      {/* Admin Login */}
+      <Route path="/halaman/:slug" component={CustomPageView} />
+
       <Route path="/admin/login" component={AdminLogin} />
 
-      {/* Admin Protected Routes */}
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/beranda" component={AdminBerandaSettings} />
       <Route path="/admin/galeri" component={AdminGaleriSettings} />
@@ -54,6 +52,7 @@ function Router() {
       <Route path="/admin/email" component={AdminEmailSettings} />
       <Route path="/admin/drive" component={AdminDriveSettings} />
       <Route path="/admin/dokumen" component={AdminDokumenSettings} />
+      <Route path="/admin/halaman" component={AdminHalamanSettings} />
       <Route path="/admin/password" component={AdminPassword} />
 
       <Route component={NotFound} />

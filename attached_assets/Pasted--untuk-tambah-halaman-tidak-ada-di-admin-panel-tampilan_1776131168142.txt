@@ -1,0 +1,43 @@
+- untuk tambah halaman tidak ada di admin panel
+- tampilan di percantik sebagai acuan :  https://www.grandwisata.net/
+- note untuk apps script : 
+Cara setup (tanpa Google Cloud Console):
+Buka Google Drive → klik tombol + Baru → Lainnya → Google Apps Script
+Hapus semua kode yang ada, lalu tempel kode script di bawah
+Klik Deploy → New deployment → pilih "Web app"
+Set "Execute as": Me | "Who has access": Anyone
+Klik Deploy → izinkan akses → salin Web app URL
+Tempel URL tersebut di kolom di bawah, lalu simpan
+- yampilkan di note juga : kode google apps scriptnya: 
+function doPost(e) {
+  try {
+    if (e.postData && e.postData.contents) {
+      var params = JSON.parse(e.postData.contents);
+      if (params.ping) {
+        return ContentService.createTextOutput(JSON.stringify({ success: true, ping: true })).setMimeType(ContentService.MimeType.JSON);
+      }
+      var fileData = Utilities.base64Decode(params.file);
+      var blob = Utilities.newBlob(fileData, params.mimeType, params.fileName);
+      var folder;
+      if (params.folderId) {
+        try { folder = DriveApp.getFolderById(params.folderId); } catch(err) { folder = DriveApp.getRootFolder(); }
+      } else {
+        folder = DriveApp.getRootFolder();
+      }
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        fileId: file.getId(),
+        url: 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w1000'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'No data' })).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+- bisa menambahkan fungsi seperti fasilitas di admin panel beranda untuk di tampilkan di beranda (berikut link url dan gdrive url)
+- video di gallery tidak berfungsi (refused to connect)

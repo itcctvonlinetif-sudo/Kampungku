@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { convertDriveUrlToEmbed } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, MapPin, Phone, FileText } from "lucide-react";
 
 export default function Home() {
   const { data: settings, isLoading } = useGetHomepageSettings();
@@ -118,13 +118,28 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {settings.features.map((feature, idx) => (
-                <div key={idx} className="bg-card border border-border p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
-                    <CheckCircle2 className="w-6 h-6" />
+              {settings.features.map((feature: { icon?: string; title: string; description: string; imageUrl?: string }, idx: number) => (
+                <div key={idx} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                  {feature.imageUrl && (
+                    <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                      <img
+                        src={convertDriveUrlToEmbed(feature.imageUrl, "image")}
+                        alt={feature.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="p-8">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
+                      {feature.icon ? (
+                        <span className="text-2xl">{feature.icon}</span>
+                      ) : (
+                        <CheckCircle2 className="w-6 h-6" />
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold mb-3 font-serif">{feature.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold mb-3 font-serif">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
