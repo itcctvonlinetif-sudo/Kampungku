@@ -14,6 +14,17 @@ export const homepageSettingsTable = pgTable("homepage_settings", {
   featuresTitle: text("features_title").default("Fasilitas Unggulan"),
   features: jsonb("features").$type<Array<{ icon: string; title: string; description: string }>>().default([]),
   statsItems: jsonb("stats_items").$type<Array<{ value: string; label: string }>>().default([]),
+  homepageSections: jsonb("homepage_sections").$type<Array<{
+    id: string;
+    title: string;
+    subtitle?: string;
+    content?: string;
+    imageUrl?: string;
+    imagePosition?: "left" | "right" | "center";
+    bgStyle?: "default" | "muted" | "primary";
+    position: "above" | "below";
+    order: number;
+  }>>().default([]),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
