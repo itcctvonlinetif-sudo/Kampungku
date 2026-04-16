@@ -58,11 +58,12 @@ export default function AdminLogin() {
             });
           }
         },
-        onError: () => {
+        onError: (err: any) => {
+          const msg = err?.data?.message || err?.message || "Terjadi kesalahan sistem. Silakan coba lagi.";
           toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: "Terjadi kesalahan sistem. Silakan coba lagi.",
+            description: msg,
           });
         }
       }
