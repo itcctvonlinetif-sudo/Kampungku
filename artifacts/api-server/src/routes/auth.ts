@@ -17,7 +17,7 @@ async function ensureAdminExists() {
   if (existing.length === 0) {
     await db.insert(adminCredentialsTable).values({
       username: "admin",
-      passwordHash: hashPassword("admin123"),
+      passwordHash: null,
     });
   }
 }
@@ -26,15 +26,23 @@ router.post("/auth/admin/login", async (req, res) => {
   try {
     await ensureAdminExists();
     const { username, password } = req.body as { username: string; password: string };
-    if (!username || !password) {
-      res.status(400).json({ success: false, message: "Username dan password wajib diisi" });
+    if (!username) {
+      res.status(400).json({ success: false, message: "Username wajib diisi" });
       return;
     }
     const [admin] = await db.select().from(adminCredentialsTable).where(eq(adminCredentialsTable.username, username)).limit(1);
-    if (!admin || admin.passwordHash !== hashPassword(password)) {
+    if (!admin) {
+      res.status(401).json({ success: false, message: "Username tidak ditemukan" });
+      return;
+    }
+
+    const needsPasswordSetup = !admin.passwordHash;
+
+    if (!needsPasswordSetup && admin.passwordHash !== hashPassword(password || "")) {
       res.status(401).json({ success: false, message: "Username atau password salah" });
       return;
     }
+
     const token = createSession(username);
     res.cookie("admin_session", token, {
       httpOnly: true,
@@ -42,7 +50,7 @@ router.post("/auth/admin/login", async (req, res) => {
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
-    res.json({ success: true, message: "Login berhasil" });
+    res.json({ success: true, message: "Login berhasil", needsPasswordSetup });
   } catch (err) {
     req.log.error({ err }, "Login error");
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -56,7 +64,7 @@ router.post("/auth/admin/logout", (req, res) => {
   res.json({ success: true });
 });
 
-router.get("/auth/admin/me", (req, res) => {
+router.get("/auth/admin/me", async (req, res) => {
   const token = req.cookies?.["admin_session"] || req.headers["x-session-token"];
   if (!token || typeof token !== "string") {
     res.json({ isAuthenticated: false });
@@ -67,18 +75,34 @@ router.get("/auth/admin/me", (req, res) => {
     res.json({ isAuthenticated: false });
     return;
   }
-  res.json({ isAuthenticated: true, username: session.username });
+  try {
+    const [admin] = await db.select().from(adminCredentialsTable).where(eq(adminCredentialsTable.username, session.username)).limit(1);
+    const needsPasswordSetup = !admin?.passwordHash;
+    res.json({ isAuthenticated: true, username: session.username, needsPasswordSetup });
+  } catch {
+    res.json({ isAuthenticated: true, username: session.username, needsPasswordSetup: false });
+  }
 });
 
 router.post("/auth/admin/change-password", requireAuth, async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+    const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword: string };
     const adminReq = req as typeof req & { adminUsername: string };
     const [admin] = await db.select().from(adminCredentialsTable).where(eq(adminCredentialsTable.username, adminReq.adminUsername)).limit(1);
-    if (!admin || admin.passwordHash !== hashPassword(currentPassword)) {
-      res.status(401).json({ error: "Password lama salah" });
+    if (!admin) {
+      res.status(404).json({ error: "Admin tidak ditemukan" });
       return;
     }
+
+    const isFirstSetup = !admin.passwordHash;
+
+    if (!isFirstSetup) {
+      if (!currentPassword || admin.passwordHash !== hashPassword(currentPassword)) {
+        res.status(401).json({ error: "Password lama salah" });
+        return;
+      }
+    }
+
     await db.update(adminCredentialsTable)
       .set({ passwordHash: hashPassword(newPassword), updatedAt: new Date() })
       .where(eq(adminCredentialsTable.username, adminReq.adminUsername));

@@ -87,6 +87,6 @@ export type DocumentsPageSettings = typeof documentsPageSettingsTable.$inferSele
 export const adminCredentialsTable = pgTable("admin_credentials", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().default("admin"),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

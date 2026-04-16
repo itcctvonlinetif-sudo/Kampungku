@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export type WebsiteLink = {
+  label: string;
+  url: string;
+};
+
 export type CustomPage = {
   id: number;
   slug: string;
@@ -8,6 +13,9 @@ export type CustomPage = {
   isPublished: boolean;
   showInNav: boolean;
   sortOrder: number;
+  imageUrls: string[];
+  websiteLinks: WebsiteLink[];
+  videoUrls: string[];
   createdAt: string;
   updatedAt: string;
 };

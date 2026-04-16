@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/layout/admin-layout";
-import { useListCustomPages, useCreateCustomPage, useUpdateCustomPage, useDeleteCustomPage, type CustomPage } from "@/hooks/use-custom-pages";
+import { useListCustomPages, useCreateCustomPage, useUpdateCustomPage, useDeleteCustomPage, type CustomPage, type WebsiteLink } from "@/hooks/use-custom-pages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Globe, EyeOff, Eye } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Globe, EyeOff, Eye, Image, Link2, Video, X } from "lucide-react";
 
 type FormData = {
   title: string;
@@ -17,6 +17,9 @@ type FormData = {
   isPublished: boolean;
   showInNav: boolean;
   sortOrder: number;
+  imageUrls: string[];
+  websiteLinks: WebsiteLink[];
+  videoUrls: string[];
 };
 
 const emptyForm: FormData = {
@@ -26,7 +29,41 @@ const emptyForm: FormData = {
   isPublished: true,
   showInNav: true,
   sortOrder: 0,
+  imageUrls: [],
+  websiteLinks: [],
+  videoUrls: [],
 };
+
+function MediaSection({
+  icon,
+  title,
+  description,
+  onAdd,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onAdd: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/30">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          {icon}
+          {title}
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onAdd} className="gap-1 text-sm">
+          <Plus className="w-4 h-4" /> Tambah
+        </Button>
+      </div>
+      <div className="px-4 py-4">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function AdminHalamanSettings() {
   const { data: pages, isLoading } = useListCustomPages();
@@ -57,6 +94,9 @@ export default function AdminHalamanSettings() {
       isPublished: page.isPublished ?? true,
       showInNav: page.showInNav ?? true,
       sortOrder: page.sortOrder ?? 0,
+      imageUrls: page.imageUrls ?? [],
+      websiteLinks: page.websiteLinks ?? [],
+      videoUrls: page.videoUrls ?? [],
     });
     setShowForm(true);
   };
@@ -107,6 +147,30 @@ export default function AdminHalamanSettings() {
       onError: () => toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus halaman." }),
     });
   };
+
+  const addImageUrl = () => setFormData({ ...formData, imageUrls: [...formData.imageUrls, ""] });
+  const updateImageUrl = (idx: number, val: string) => {
+    const arr = [...formData.imageUrls];
+    arr[idx] = val;
+    setFormData({ ...formData, imageUrls: arr });
+  };
+  const removeImageUrl = (idx: number) => setFormData({ ...formData, imageUrls: formData.imageUrls.filter((_, i) => i !== idx) });
+
+  const addWebsiteLink = () => setFormData({ ...formData, websiteLinks: [...formData.websiteLinks, { label: "", url: "" }] });
+  const updateWebsiteLink = (idx: number, field: keyof WebsiteLink, val: string) => {
+    const arr = [...formData.websiteLinks];
+    arr[idx] = { ...arr[idx], [field]: val };
+    setFormData({ ...formData, websiteLinks: arr });
+  };
+  const removeWebsiteLink = (idx: number) => setFormData({ ...formData, websiteLinks: formData.websiteLinks.filter((_, i) => i !== idx) });
+
+  const addVideoUrl = () => setFormData({ ...formData, videoUrls: [...formData.videoUrls, ""] });
+  const updateVideoUrl = (idx: number, val: string) => {
+    const arr = [...formData.videoUrls];
+    arr[idx] = val;
+    setFormData({ ...formData, videoUrls: arr });
+  };
+  const removeVideoUrl = (idx: number) => setFormData({ ...formData, videoUrls: formData.videoUrls.filter((_, i) => i !== idx) });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -162,6 +226,99 @@ export default function AdminHalamanSettings() {
                   placeholder="Tulis isi halaman di sini... Anda bisa menggunakan HTML."
                 />
               </div>
+
+              <MediaSection
+                icon={<Image className="w-4 h-4 text-muted-foreground" />}
+                title="URL Gambar"
+                description="Tambahkan URL gambar"
+                onAdd={addImageUrl}
+              >
+                {formData.imageUrls.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Tambahkan URL gambar yang akan ditampilkan di halaman ini — klik "Tambah" untuk menambahkan
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {formData.imageUrls.map((url, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input
+                          value={url}
+                          onChange={e => updateImageUrl(idx, e.target.value)}
+                          placeholder="https://example.com/gambar.jpg"
+                          className="flex-1"
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeImageUrl(idx)} className="shrink-0 text-destructive hover:text-destructive">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </MediaSection>
+
+              <MediaSection
+                icon={<Link2 className="w-4 h-4 text-muted-foreground" />}
+                title="Link Website / Referensi"
+                description="Tambahkan tautan"
+                onAdd={addWebsiteLink}
+              >
+                {formData.websiteLinks.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Tambahkan tautan website atau referensi eksternal — klik "Tambah" untuk menambahkan
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {formData.websiteLinks.map((link, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input
+                          value={link.label}
+                          onChange={e => updateWebsiteLink(idx, "label", e.target.value)}
+                          placeholder="Nama / Label"
+                          className="w-36 shrink-0"
+                        />
+                        <Input
+                          value={link.url}
+                          onChange={e => updateWebsiteLink(idx, "url", e.target.value)}
+                          placeholder="https://example.com"
+                          className="flex-1"
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeWebsiteLink(idx)} className="shrink-0 text-destructive hover:text-destructive">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </MediaSection>
+
+              <MediaSection
+                icon={<Video className="w-4 h-4 text-muted-foreground" />}
+                title="URL Video / YouTube"
+                description="Tambahkan link video"
+                onAdd={addVideoUrl}
+              >
+                {formData.videoUrls.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Tambahkan link video YouTube atau upload file video — klik "Tambah" untuk menambahkan
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {formData.videoUrls.map((url, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input
+                          value={url}
+                          onChange={e => updateVideoUrl(idx, e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="flex-1"
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeVideoUrl(idx)} className="shrink-0 text-destructive hover:text-destructive">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </MediaSection>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -225,6 +382,9 @@ export default function AdminHalamanSettings() {
                     /halaman/{page.slug}
                     {page.showInNav && <span className="ml-2 bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs">Tampil di Menu</span>}
                     {!page.isPublished && <span className="ml-2 bg-muted text-muted-foreground px-1.5 py-0.5 rounded text-xs">Draft</span>}
+                    {(page.imageUrls?.length > 0) && <span className="ml-2 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 px-1.5 py-0.5 rounded text-xs">{page.imageUrls.length} Gambar</span>}
+                    {(page.videoUrls?.length > 0) && <span className="ml-2 bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 px-1.5 py-0.5 rounded text-xs">{page.videoUrls.length} Video</span>}
+                    {(page.websiteLinks?.length > 0) && <span className="ml-2 bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400 px-1.5 py-0.5 rounded text-xs">{page.websiteLinks.length} Link</span>}
                   </p>
                 </div>
               </div>

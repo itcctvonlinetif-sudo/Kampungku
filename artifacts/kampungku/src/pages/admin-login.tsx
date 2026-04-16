@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Info } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AdminLogin() {
@@ -18,10 +18,13 @@ export default function AdminLogin() {
   const loginMutation = useAdminLogin();
   const queryClient = useQueryClient();
   
-  // If already logged in, redirect to admin dashboard
   const { data: adminMe } = useGetAdminMe({ query: { retry: false } });
   if (adminMe?.isAuthenticated) {
-    setLocation("/admin");
+    if ((adminMe as any).needsPasswordSetup) {
+      setLocation("/admin/password");
+    } else {
+      setLocation("/admin");
+    }
     return null;
   }
 
@@ -34,11 +37,19 @@ export default function AdminLogin() {
         onSuccess: (res) => {
           if (res.success) {
             queryClient.invalidateQueries();
-            toast({
-              title: "Login Berhasil",
-              description: "Selamat datang di Panel Admin Kampungku.",
-            });
-            setLocation("/admin");
+            if ((res as any).needsPasswordSetup) {
+              toast({
+                title: "Login Berhasil",
+                description: "Silakan buat password baru untuk mengamankan akun Anda.",
+              });
+              setLocation("/admin/password");
+            } else {
+              toast({
+                title: "Login Berhasil",
+                description: "Selamat datang di Panel Admin Kampungku.",
+              });
+              setLocation("/admin");
+            }
           } else {
             toast({
               variant: "destructive",
@@ -73,10 +84,14 @@ export default function AdminLogin() {
           </div>
           <CardTitle className="text-2xl font-serif">Admin Kampungku</CardTitle>
           <CardDescription>
-            Masukkan username dan password untuk mengakses panel kontrol
+            Masukkan username untuk mengakses panel kontrol
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex items-start gap-2 p-3 mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+            <Info className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Jika baru pertama kali masuk, gunakan username <strong>admin</strong> dan biarkan password kosong. Anda akan diminta membuat password setelah login.</span>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
@@ -95,7 +110,7 @@ export default function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                placeholder="Kosongkan jika belum pernah set password"
                 autoComplete="current-password"
               />
             </div>

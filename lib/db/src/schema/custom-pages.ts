@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -10,6 +10,9 @@ export const customPagesTable = pgTable("custom_pages", {
   isPublished: boolean("is_published").default(true),
   showInNav: boolean("show_in_nav").default(true),
   sortOrder: integer("sort_order").default(0),
+  imageUrls: jsonb("image_urls").$type<string[]>().default([]),
+  websiteLinks: jsonb("website_links").$type<Array<{ label: string; url: string }>>().default([]),
+  videoUrls: jsonb("video_urls").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
