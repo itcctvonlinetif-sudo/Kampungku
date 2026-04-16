@@ -26,6 +26,13 @@ type StatItem = {
   label: string;
 };
 
+type CardItem = {
+  icon?: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+};
+
 type HomepageSection = {
   id: string;
   title: string;
@@ -36,6 +43,7 @@ type HomepageSection = {
   bgStyle?: "default" | "muted" | "primary";
   position: "above" | "below";
   order: number;
+  items?: CardItem[];
 };
 
 function generateId() {
@@ -65,6 +73,7 @@ export default function AdminBerandaSettings() {
   const [heroUploadMode, setHeroUploadMode] = useState<"url" | "drive">("url");
   const [aboutUploadMode, setAboutUploadMode] = useState<"url" | "drive">("url");
   const [sectionImageModes, setSectionImageModes] = useState<Record<string, "url" | "drive">>({});
+  const [cardImageModes, setCardImageModes] = useState<Record<string, "url" | "drive">>({});
 
   useEffect(() => {
     if (settings) {
@@ -119,7 +128,7 @@ export default function AdminBerandaSettings() {
     setFormData({ ...formData, statsItems: updated });
   };
 
-  // --- Custom sections ---
+  // --- Custom sections (above) ---
   const sectionsByPosition = (pos: "above" | "below") =>
     [...formData.homepageSections]
       .filter((s) => s.position === pos)
@@ -127,17 +136,26 @@ export default function AdminBerandaSettings() {
 
   const addSection = (position: "above" | "below") => {
     const existing = formData.homepageSections.filter((s) => s.position === position);
-    const newSection: HomepageSection = {
-      id: generateId(),
-      title: "Section Baru",
-      subtitle: "",
-      content: "",
-      imageUrl: "",
-      imagePosition: "right",
-      bgStyle: "default",
-      position,
-      order: existing.length,
-    };
+    const newSection: HomepageSection = position === "below"
+      ? {
+          id: generateId(),
+          title: "Section Baru",
+          bgStyle: "default",
+          position: "below",
+          order: existing.length,
+          items: [],
+        }
+      : {
+          id: generateId(),
+          title: "Section Baru",
+          subtitle: "",
+          content: "",
+          imageUrl: "",
+          imagePosition: "right",
+          bgStyle: "default",
+          position: "above",
+          order: existing.length,
+        };
     setFormData({ ...formData, homepageSections: [...formData.homepageSections, newSection] });
   };
 
@@ -166,12 +184,41 @@ export default function AdminBerandaSettings() {
     if (direction === "down" && idx === group.length - 1) return;
 
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    const newOrder = group[idx].order;
+    const tempOrder = group[idx].order;
     group[idx] = { ...group[idx], order: group[swapIdx].order };
-    group[swapIdx] = { ...group[swapIdx], order: newOrder };
+    group[swapIdx] = { ...group[swapIdx], order: tempOrder };
 
     const others = formData.homepageSections.filter((s) => s.position !== pos);
     setFormData({ ...formData, homepageSections: [...others, ...group] });
+  };
+
+  // --- Card items inside a "below" section ---
+  const addCardItem = (sectionId: string) => {
+    const updated = formData.homepageSections.map((s) => {
+      if (s.id !== sectionId) return s;
+      return { ...s, items: [...(s.items || []), { title: "", description: "", imageUrl: "", icon: "" }] };
+    });
+    setFormData({ ...formData, homepageSections: updated });
+  };
+
+  const updateCardItem = (sectionId: string, itemIdx: number, field: string, value: string) => {
+    const updated = formData.homepageSections.map((s) => {
+      if (s.id !== sectionId) return s;
+      const items = [...(s.items || [])];
+      items[itemIdx] = { ...items[itemIdx], [field]: value };
+      return { ...s, items };
+    });
+    setFormData({ ...formData, homepageSections: updated });
+  };
+
+  const removeCardItem = (sectionId: string, itemIdx: number) => {
+    const updated = formData.homepageSections.map((s) => {
+      if (s.id !== sectionId) return s;
+      const items = [...(s.items || [])];
+      items.splice(itemIdx, 1);
+      return { ...s, items };
+    });
+    setFormData({ ...formData, homepageSections: updated });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -197,7 +244,8 @@ export default function AdminBerandaSettings() {
   const appsScriptUrl = driveSettings?.appsScriptUrl || "";
   const folderId = driveSettings?.folderId || "";
 
-  const renderSectionEditor = (section: HomepageSection, groupSections: HomepageSection[], idx: number) => (
+  // Render editor for "above" sections (text + image layout)
+  const renderAboveSectionEditor = (section: HomepageSection, groupSections: HomepageSection[], idx: number) => (
     <div key={section.id} className="space-y-4 border p-4 rounded-lg relative bg-muted/20">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -208,33 +256,13 @@ export default function AdminBerandaSettings() {
           </Badge>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => moveSectionOrder(section.id, "up")}
-            disabled={idx === 0}
-          >
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSectionOrder(section.id, "up")} disabled={idx === 0}>
             <ChevronUp className="w-4 h-4" />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => moveSectionOrder(section.id, "down")}
-            disabled={idx === groupSections.length - 1}
-          >
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSectionOrder(section.id, "down")} disabled={idx === groupSections.length - 1}>
             <ChevronDown className="w-4 h-4" />
           </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => removeSection(section.id)}
-          >
+          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeSection(section.id)}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -243,42 +271,24 @@ export default function AdminBerandaSettings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <Label>Nama / Judul Section</Label>
-          <Input
-            value={section.title}
-            onChange={(e) => updateSection(section.id, "title", e.target.value)}
-            placeholder="Contoh: Lokasi Strategis"
-          />
+          <Input value={section.title} onChange={(e) => updateSection(section.id, "title", e.target.value)} placeholder="Contoh: Lokasi Strategis" />
         </div>
         <div className="space-y-1">
           <Label>Sub Judul (Opsional)</Label>
-          <Input
-            value={section.subtitle || ""}
-            onChange={(e) => updateSection(section.id, "subtitle", e.target.value)}
-            placeholder="Kalimat pendukung judul"
-          />
+          <Input value={section.subtitle || ""} onChange={(e) => updateSection(section.id, "subtitle", e.target.value)} placeholder="Kalimat pendukung judul" />
         </div>
       </div>
 
       <div className="space-y-1">
         <Label>Konten / Paragraf</Label>
-        <Textarea
-          value={section.content || ""}
-          onChange={(e) => updateSection(section.id, "content", e.target.value)}
-          rows={3}
-          placeholder="Isi teks section ini..."
-        />
+        <Textarea value={section.content || ""} onChange={(e) => updateSection(section.id, "content", e.target.value)} rows={3} placeholder="Isi teks section ini..." />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <Label>Gaya Latar Belakang</Label>
-          <Select
-            value={section.bgStyle || "default"}
-            onValueChange={(v) => updateSection(section.id, "bgStyle", v)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+          <Select value={section.bgStyle || "default"} onValueChange={(v) => updateSection(section.id, "bgStyle", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Normal (Putih)</SelectItem>
               <SelectItem value="muted">Abu-abu</SelectItem>
@@ -288,13 +298,8 @@ export default function AdminBerandaSettings() {
         </div>
         <div className="space-y-1">
           <Label>Posisi Gambar</Label>
-          <Select
-            value={section.imagePosition || "right"}
-            onValueChange={(v) => updateSection(section.id, "imagePosition", v)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+          <Select value={section.imagePosition || "right"} onValueChange={(v) => updateSection(section.id, "imagePosition", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="left">Kiri</SelectItem>
               <SelectItem value="right">Kanan</SelectItem>
@@ -307,43 +312,149 @@ export default function AdminBerandaSettings() {
       <div className="space-y-2">
         <Label>Gambar Section (Opsional)</Label>
         <div className="flex gap-2 mb-2">
-          <Button
-            type="button" size="sm"
-            variant={(sectionImageModes[section.id] ?? "url") === "url" ? "default" : "outline"}
-            onClick={() => setSectionImageModes({ ...sectionImageModes, [section.id]: "url" })}
-          >
+          <Button type="button" size="sm" variant={(sectionImageModes[section.id] ?? "url") === "url" ? "default" : "outline"} onClick={() => setSectionImageModes({ ...sectionImageModes, [section.id]: "url" })}>
             <LinkIcon className="w-3 h-3 mr-1" /> URL
           </Button>
-          <Button
-            type="button" size="sm"
-            variant={(sectionImageModes[section.id] ?? "url") === "drive" ? "default" : "outline"}
-            onClick={() => setSectionImageModes({ ...sectionImageModes, [section.id]: "drive" })}
-          >
+          <Button type="button" size="sm" variant={(sectionImageModes[section.id] ?? "url") === "drive" ? "default" : "outline"} onClick={() => setSectionImageModes({ ...sectionImageModes, [section.id]: "drive" })}>
             <HardDrive className="w-3 h-3 mr-1" /> Google Drive
           </Button>
         </div>
         {(sectionImageModes[section.id] ?? "url") === "url" ? (
-          <Input
-            value={section.imageUrl || ""}
-            onChange={(e) => updateSection(section.id, "imageUrl", e.target.value)}
-            placeholder="https://..."
-          />
+          <Input value={section.imageUrl || ""} onChange={(e) => updateSection(section.id, "imageUrl", e.target.value)} placeholder="https://..." />
         ) : (
-          <DriveUpload
-            appsScriptUrl={appsScriptUrl}
-            folderId={folderId}
-            accept="image/*"
-            label="Upload Gambar"
-            onUpload={(url) => updateSection(section.id, "imageUrl", url)}
-          />
+          <DriveUpload appsScriptUrl={appsScriptUrl} folderId={folderId} accept="image/*" label="Upload Gambar" onUpload={(url) => updateSection(section.id, "imageUrl", url)} />
         )}
         {section.imageUrl && (
-          <img
-            src={convertDriveUrlToEmbed(section.imageUrl, "image")}
-            className="h-24 rounded-md object-cover mt-2"
-            alt="preview section"
-          />
+          <img src={convertDriveUrlToEmbed(section.imageUrl, "image")} className="h-24 rounded-md object-cover mt-2" alt="preview section" />
         )}
+      </div>
+    </div>
+  );
+
+  // Render editor for "below" sections (card grid layout, same as Fasilitas)
+  const renderBelowSectionEditor = (section: HomepageSection, groupSections: HomepageSection[], idx: number) => (
+    <div key={section.id} className="border rounded-lg bg-muted/20 overflow-hidden">
+      {/* Section header */}
+      <div className="flex items-center justify-between p-4 border-b bg-background">
+        <div className="flex items-center gap-2">
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Section {idx + 1}</span>
+          <Badge variant={section.bgStyle === "primary" ? "default" : "secondary"}>
+            {section.bgStyle === "primary" ? "Primer" : section.bgStyle === "muted" ? "Abu-abu" : "Normal"}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSectionOrder(section.id, "up")} disabled={idx === 0}>
+            <ChevronUp className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSectionOrder(section.id, "down")} disabled={idx === groupSections.length - 1}>
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeSection(section.id)}>
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Section title + background style */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label>Judul Bagian</Label>
+            <Input value={section.title} onChange={(e) => updateSection(section.id, "title", e.target.value)} placeholder="Contoh: Keunggulan Kami" />
+          </div>
+          <div className="space-y-1">
+            <Label>Gaya Latar Belakang</Label>
+            <Select value={section.bgStyle || "default"} onValueChange={(v) => updateSection(section.id, "bgStyle", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Normal (Putih)</SelectItem>
+                <SelectItem value="muted">Abu-abu</SelectItem>
+                <SelectItem value="primary">Warna Primer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Card items */}
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold">Item Kartu</Label>
+          {(section.items || []).map((item, itemIdx) => {
+            const cardKey = `${section.id}-${itemIdx}`;
+            return (
+              <div key={itemIdx} className="space-y-3 border p-4 rounded-lg relative bg-background">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-3 right-3 h-7 w-7"
+                  onClick={() => removeCardItem(section.id, itemIdx)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+
+                <div className="space-y-1 pt-1">
+                  <Label>Judul Item</Label>
+                  <Input
+                    value={item.title}
+                    onChange={(e) => updateCardItem(section.id, itemIdx, "title", e.target.value)}
+                    placeholder="Contoh: Keamanan 24 Jam"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Nama Ikon (Lucide, Contoh: Shield, Trees, Wifi, Star)</Label>
+                  <Input
+                    value={item.icon || ""}
+                    onChange={(e) => updateCardItem(section.id, itemIdx, "icon", e.target.value)}
+                    placeholder="Shield"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Deskripsi Singkat</Label>
+                  <Textarea
+                    value={item.description}
+                    onChange={(e) => updateCardItem(section.id, itemIdx, "description", e.target.value)}
+                    rows={2}
+                    placeholder="Deskripsi singkat item ini..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Gambar (Opsional)</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Button type="button" size="sm" variant={(cardImageModes[cardKey] ?? "url") === "url" ? "default" : "outline"} onClick={() => setCardImageModes({ ...cardImageModes, [cardKey]: "url" })}>
+                      <LinkIcon className="w-3 h-3 mr-1" /> URL
+                    </Button>
+                    <Button type="button" size="sm" variant={(cardImageModes[cardKey] ?? "url") === "drive" ? "default" : "outline"} onClick={() => setCardImageModes({ ...cardImageModes, [cardKey]: "drive" })}>
+                      <HardDrive className="w-3 h-3 mr-1" /> Google Drive
+                    </Button>
+                  </div>
+                  {(cardImageModes[cardKey] ?? "url") === "url" ? (
+                    <Input
+                      value={item.imageUrl || ""}
+                      onChange={(e) => updateCardItem(section.id, itemIdx, "imageUrl", e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1"
+                    />
+                  ) : (
+                    <DriveUpload
+                      appsScriptUrl={appsScriptUrl}
+                      folderId={folderId}
+                      accept="image/*"
+                      label="Upload"
+                      onUpload={(url) => updateCardItem(section.id, itemIdx, "imageUrl", url)}
+                    />
+                  )}
+                  {item.imageUrl && (
+                    <img src={convertDriveUrlToEmbed(item.imageUrl, "image")} className="h-20 rounded-md object-cover mt-2" alt="preview item" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <Button type="button" variant="outline" onClick={() => addCardItem(section.id)} className="w-full">
+            <Plus className="w-4 h-4 mr-2" /> Tambah Item Kartu
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -387,17 +498,9 @@ export default function AdminBerandaSettings() {
                 <Input name="heroImageUrl" value={formData.heroImageUrl} onChange={handleChange} placeholder="https://..." />
               ) : (
                 <div className="space-y-2">
-                  <DriveUpload
-                    appsScriptUrl={appsScriptUrl}
-                    folderId={folderId}
-                    accept="image/*"
-                    label="Upload Gambar Background"
-                    onUpload={(url) => setFormData({ ...formData, heroImageUrl: url })}
-                  />
+                  <DriveUpload appsScriptUrl={appsScriptUrl} folderId={folderId} accept="image/*" label="Upload Gambar Background" onUpload={(url) => setFormData({ ...formData, heroImageUrl: url })} />
                   {formData.heroImageUrl && (
-                    <div className="mt-2">
-                      <img src={convertDriveUrlToEmbed(formData.heroImageUrl, "image")} className="h-24 rounded-md object-cover" alt="preview" />
-                    </div>
+                    <img src={convertDriveUrlToEmbed(formData.heroImageUrl, "image")} className="h-24 rounded-md object-cover" alt="preview" />
                   )}
                 </div>
               )}
@@ -455,13 +558,7 @@ export default function AdminBerandaSettings() {
               {aboutUploadMode === "url" ? (
                 <Input name="aboutImageUrl" value={formData.aboutImageUrl} onChange={handleChange} placeholder="https://..." />
               ) : (
-                <DriveUpload
-                  appsScriptUrl={appsScriptUrl}
-                  folderId={folderId}
-                  accept="image/*"
-                  label="Upload Gambar"
-                  onUpload={(url) => setFormData({ ...formData, aboutImageUrl: url })}
-                />
+                <DriveUpload appsScriptUrl={appsScriptUrl} folderId={folderId} accept="image/*" label="Upload Gambar" onUpload={(url) => setFormData({ ...formData, aboutImageUrl: url })} />
               )}
             </div>
           </CardContent>
@@ -476,9 +573,7 @@ export default function AdminBerandaSettings() {
                   <Badge variant="outline" className="text-blue-600 border-blue-400">Di atas Fasilitas</Badge>
                   Section Kustom — Di Atas
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Section-section ini muncul sebelum bagian Fasilitas & Keunggulan
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">Section ini muncul sebelum bagian Fasilitas & Keunggulan</p>
               </div>
               <Button type="button" variant="outline" onClick={() => addSection("above")}>
                 <Plus className="w-4 h-4 mr-2" /> Tambah Section
@@ -491,34 +586,24 @@ export default function AdminBerandaSettings() {
                 Belum ada section. Klik "Tambah Section" untuk membuat section baru di atas Fasilitas.
               </div>
             ) : (
-              aboveSections.map((section, idx) => renderSectionEditor(section, aboveSections, idx))
+              aboveSections.map((section, idx) => renderAboveSectionEditor(section, aboveSections, idx))
             )}
           </CardContent>
         </Card>
 
         {/* Fasilitas & Keunggulan */}
         <Card>
-          <CardHeader>
-            <CardTitle>Fasilitas & Keunggulan</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Fasilitas & Keunggulan</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 mb-6">
               <Label htmlFor="featuresTitle">Judul Bagian Fasilitas</Label>
               <Input id="featuresTitle" name="featuresTitle" value={formData.featuresTitle} onChange={handleChange} />
             </div>
-
             {formData.features.map((feature, idx) => (
               <div key={idx} className="space-y-4 border p-4 rounded-lg relative bg-muted/20">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-3 right-3"
-                  onClick={() => removeFeature(idx)}
-                >
+                <Button type="button" variant="destructive" size="icon" className="absolute top-3 right-3" onClick={() => removeFeature(idx)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
-
                 <div className="space-y-1 pt-2">
                   <Label>Judul Fasilitas</Label>
                   <Input value={feature.title} onChange={(e) => handleFeatureChange(idx, "title", e.target.value)} />
@@ -540,20 +625,10 @@ export default function AdminBerandaSettings() {
                       placeholder="URL Gambar atau Upload ke Drive"
                       className="flex-1 min-w-0"
                     />
-                    <DriveUpload
-                      appsScriptUrl={appsScriptUrl}
-                      folderId={folderId}
-                      accept="image/*"
-                      label="Upload"
-                      onUpload={(url) => handleFeatureChange(idx, "imageUrl", url)}
-                    />
+                    <DriveUpload appsScriptUrl={appsScriptUrl} folderId={folderId} accept="image/*" label="Upload" onUpload={(url) => handleFeatureChange(idx, "imageUrl", url)} />
                   </div>
                   {feature.imageUrl && (
-                    <img
-                      src={convertDriveUrlToEmbed(feature.imageUrl, "image")}
-                      className="h-20 rounded-md object-cover mt-2"
-                      alt="preview fasilitas"
-                    />
+                    <img src={convertDriveUrlToEmbed(feature.imageUrl, "image")} className="h-20 rounded-md object-cover mt-2" alt="preview fasilitas" />
                   )}
                 </div>
               </div>
@@ -564,7 +639,7 @@ export default function AdminBerandaSettings() {
           </CardContent>
         </Card>
 
-        {/* Section Custom di bawah Fasilitas */}
+        {/* Section Custom di bawah Fasilitas — kartu grid seperti Fasilitas */}
         <Card className="border-green-200 dark:border-green-800">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -574,7 +649,7 @@ export default function AdminBerandaSettings() {
                   Section Kustom — Di Bawah
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Section-section ini muncul setelah bagian Fasilitas & Keunggulan
+                  Section-section ini muncul setelah Fasilitas & Keunggulan, ditampilkan dalam format grid kartu
                 </p>
               </div>
               <Button type="button" variant="outline" onClick={() => addSection("below")}>
@@ -588,7 +663,7 @@ export default function AdminBerandaSettings() {
                 Belum ada section. Klik "Tambah Section" untuk membuat section baru di bawah Fasilitas.
               </div>
             ) : (
-              belowSections.map((section, idx) => renderSectionEditor(section, belowSections, idx))
+              belowSections.map((section, idx) => renderBelowSectionEditor(section, belowSections, idx))
             )}
           </CardContent>
         </Card>

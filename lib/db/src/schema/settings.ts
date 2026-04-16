@@ -24,6 +24,7 @@ export const homepageSettingsTable = pgTable("homepage_settings", {
     bgStyle?: "default" | "muted" | "primary";
     position: "above" | "below";
     order: number;
+    items?: Array<{ icon?: string; title: string; description: string; imageUrl?: string }>;
   }>>().default([]),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

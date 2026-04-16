@@ -6,6 +6,13 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
+type CardItem = {
+  icon?: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+};
+
 type HomepageSection = {
   id: string;
   title: string;
@@ -16,6 +23,7 @@ type HomepageSection = {
   bgStyle?: "default" | "muted" | "primary";
   position: "above" | "below";
   order: number;
+  items?: CardItem[];
 };
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
@@ -24,7 +32,8 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
   return <Icon className={className} />;
 }
 
-function CustomSection({ section }: { section: HomepageSection }) {
+// "Above" section: text + optional image layout
+function AboveSection({ section }: { section: HomepageSection }) {
   const bgClass =
     section.bgStyle === "primary"
       ? "bg-primary text-primary-foreground"
@@ -34,62 +43,101 @@ function CustomSection({ section }: { section: HomepageSection }) {
 
   const imageUrl = section.imageUrl ? convertDriveUrlToEmbed(section.imageUrl, "image") : null;
   const imagePos = section.imagePosition || "right";
+  const textColor = section.bgStyle === "primary" ? "text-primary-foreground" : "text-foreground";
+  const subColor = section.bgStyle === "primary" ? "text-primary-foreground/80" : "text-muted-foreground";
 
   return (
     <section className={`py-20 md:py-28 ${bgClass}`}>
       <div className="container mx-auto px-4">
-        {/* Center layout: full-width image then text below */}
         {imagePos === "center" ? (
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${section.bgStyle === "primary" ? "text-primary-foreground" : "text-foreground"}`}>
-              {section.title}
-            </h2>
-            {section.subtitle && (
-              <p className={`text-lg mb-8 ${section.bgStyle === "primary" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-                {section.subtitle}
-              </p>
-            )}
+            <h2 className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${textColor}`}>{section.title}</h2>
+            {section.subtitle && <p className={`text-lg mb-8 ${subColor}`}>{section.subtitle}</p>}
             {imageUrl && (
               <div className="rounded-2xl overflow-hidden shadow-xl mb-8 aspect-[16/7]">
                 <img src={imageUrl} alt={section.title} className="w-full h-full object-cover" />
               </div>
             )}
             {section.content && (
-              <p className={`text-base leading-relaxed whitespace-pre-line ${section.bgStyle === "primary" ? "text-primary-foreground/90" : "text-muted-foreground"}`}>
-                {section.content}
-              </p>
+              <p className={`text-base leading-relaxed whitespace-pre-line ${subColor}`}>{section.content}</p>
             )}
           </div>
         ) : (
-          /* Left/right layout */
           <div className={`flex flex-col ${imagePos === "left" ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-12 lg:gap-20`}>
             <div className="w-full md:w-1/2">
-              <h2 className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${section.bgStyle === "primary" ? "text-primary-foreground" : "text-foreground"}`}>
-                {section.title}
-              </h2>
-              {section.subtitle && (
-                <p className={`text-lg mb-6 ${section.bgStyle === "primary" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-                  {section.subtitle}
-                </p>
-              )}
+              <h2 className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${textColor}`}>{section.title}</h2>
+              {section.subtitle && <p className={`text-lg mb-6 ${subColor}`}>{section.subtitle}</p>}
               {section.content && (
-                <p className={`text-base leading-relaxed whitespace-pre-line ${section.bgStyle === "primary" ? "text-primary-foreground/90" : "text-muted-foreground"}`}>
-                  {section.content}
-                </p>
+                <p className={`text-base leading-relaxed whitespace-pre-line ${subColor}`}>{section.content}</p>
               )}
             </div>
-            {imageUrl ? (
+            {imageUrl && (
               <div className="w-full md:w-1/2">
                 <div className="rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
                   <img src={imageUrl} alt={section.title} className="w-full h-full object-cover" />
                 </div>
               </div>
-            ) : (
-              /* No image: center text at full width */
-              !imageUrl && !section.content ? null : null
             )}
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+// "Below" section: card grid layout identical to Fasilitas & Keunggulan
+function BelowSection({ section }: { section: HomepageSection }) {
+  const bgClass =
+    section.bgStyle === "primary"
+      ? "bg-primary"
+      : section.bgStyle === "muted"
+      ? "bg-muted/30"
+      : "bg-background";
+
+  const titleColor = section.bgStyle === "primary" ? "text-primary-foreground" : "text-foreground";
+  const dividerColor = section.bgStyle === "primary" ? "bg-primary-foreground/40" : "bg-primary";
+
+  const items = section.items || [];
+  if (items.length === 0) return null;
+
+  return (
+    <section className={`py-20 md:py-32 ${bgClass}`}>
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${titleColor}`}>
+            {section.title}
+          </h2>
+          <div className={`w-24 h-1 mx-auto rounded-full ${dividerColor}`}></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden flex flex-col"
+            >
+              {item.imageUrl && (
+                <div className="aspect-[16/9] w-full overflow-hidden bg-muted flex-shrink-0">
+                  <img
+                    src={convertDriveUrlToEmbed(item.imageUrl, "image")}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="p-6 flex flex-col flex-1">
+                {item.icon && (
+                  <div className="inline-flex items-center gap-1.5 text-primary bg-primary/10 rounded-md px-2.5 py-1 text-sm font-medium mb-4 w-fit">
+                    <DynamicIcon name={item.icon} className="w-4 h-4" />
+                    <span>{item.icon}</span>
+                  </div>
+                )}
+                <h3 className="text-lg font-bold mb-2 text-foreground">{item.title}</h3>
+                <p className="text-muted-foreground leading-relaxed text-sm">{item.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -202,10 +250,10 @@ export default function Home() {
 
       {/* Custom sections: ABOVE Fasilitas */}
       {aboveSections.map((section) => (
-        <CustomSection key={section.id} section={section} />
+        <AboveSection key={section.id} section={section} />
       ))}
 
-      {/* Features Section */}
+      {/* Fasilitas & Keunggulan */}
       {settings?.features && settings.features.length > 0 && (
         <section className="py-20 md:py-32 bg-muted/30">
           <div className="container mx-auto px-4">
@@ -215,17 +263,12 @@ export default function Home() {
               </h2>
               <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {settings.features.map((feature: { icon?: string; title: string; description: string; imageUrl?: string }, idx: number) => (
                 <div key={idx} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden flex flex-col">
                   {feature.imageUrl && (
                     <div className="aspect-[16/9] w-full overflow-hidden bg-muted flex-shrink-0">
-                      <img
-                        src={convertDriveUrlToEmbed(feature.imageUrl, "image")}
-                        alt={feature.title}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={convertDriveUrlToEmbed(feature.imageUrl, "image")} alt={feature.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="p-6 flex flex-col flex-1">
@@ -245,9 +288,9 @@ export default function Home() {
         </section>
       )}
 
-      {/* Custom sections: BELOW Fasilitas */}
+      {/* Custom sections: BELOW Fasilitas — card grid format */}
       {belowSections.map((section) => (
-        <CustomSection key={section.id} section={section} />
+        <BelowSection key={section.id} section={section} />
       ))}
     </MainLayout>
   );
